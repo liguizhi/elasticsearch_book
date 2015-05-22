@@ -1,4 +1,5 @@
 # Summary
 
-* PART I :Getting started
+* PART I
+   * 初识Es
 
