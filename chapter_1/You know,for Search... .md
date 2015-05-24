@@ -178,3 +178,59 @@ Elasticsearch使用JSON（即JavaScript对象标记法）作为序列号文档�
         "join_date":"2014/05/01"
     }
 ```
+尽管原始的用户对象非常复杂，但是在这个JSON版本中，对象的结构和含义都包含进来了。把对象转化成JSON以便索引，对Elasticsearch来说，比处理扁平化表结构更容易。
+>几乎所有的语言都有把无序的数据结构或者对象转化成JSON格式的模块，只是不同语言的实现细节有别。具体查阅处理JSON序列化模块。Elasticsearch官方客户端中，已经自动提供了JSON格式转化。
+
+## Finding your feet ##
+我们来通过一个简单的教程来给你更直观的印象，以及阐述Elasticsearch多么易用，其中包含了基础的概念，比如索引，检索和聚合。
+
+我们将持续介绍一些新的名词和基本概念，但即使你不能马上理解的话也问题不大。本书的其余部分中，我们会继续深入介绍此处涉及的概念。
+
+所以，坐好了，来一次感受Elasticsearch能力的旋风之旅吧。
+
+## Let's build an employee directory ##
+
+我们正巧为大公司打工，作为HR部门新活动*We love our drones!*的第一步，我们被分派的任务是建立雇员目录。这个目录需要能增强员工的认同感，提供实时的协同动态合作，所以，它有这几项业务需求：
+>数据能存储多值的标签，数组，以及全文文本
+>能检索任何雇员的全部信息
+>允许结构化搜索，比如查询年龄大于30岁的雇员
+>允许简单的全文搜索和复杂的短语搜索
+>从匹配的文档中提供高亮的文本摘要
+>能使管理部门基于数据建立分析面板
+
+## 索引雇员文档 ##
+业务的第一步就是存储雇员数据。需要约定一个雇员文档的格式，一个雇员文档代表一个雇员信息。在Elasticsearch中存储数据的过程就叫建索引（indexing），当然，建索引之前我们得明确把数据存储在什么地方。
+
+在Elasticsearch中，一个文档归属于一种类型（type），并且不同的类型（types）可以存在于一个索引（index）中。可以大致跟传统关系数据库做个类比：
+>    Relation DB => Databases => Tables => Rows => Columns
+>    Elasticsearch => Indices => Types  => Documents => Fields
+
+一个Elasticsearch集群可以包含多个索引(indices,数据库）,索引中又可以包含多种类型(types,类似tables).这些类型包含了多个文档(documents,类似于rows),每个文档包含多个字段(field,类似于column)。
+> ## Index vs Index vs Index ##
+> 你可能已经注意到，index在Elasticsearch的语境中有不同的含义，此处有必要做个澄清：
+> 
+- Index(名词):如上所述，一个索引就类似传统数据库中的数据库。是存储相关文档的地方。复数是indices或indexes
+- Index(动词):建立文档索引，即把文档存储到索引中以便检索和查询。类似于SQL中的insert操作，不同之处在于，如果文档已经存在的话，新文档会替换老文档。
+- Inverted index：反向索引。关系型数据库为了增加列查询的速度，会增加数据库索引，类似于B-Tree索引。Elasticsearch和Lucene为了达到同样目的，用的是被称作反向索引的结构。默认情况下，文档的每个字段都被索引（具有反向索引）并且能被搜索。一个不具备反向索引的字段是无法被搜索的。我们会在后续反向索引章节中进行深入讨论。
+
+所以，对于我们的雇员目录来说，我们需要进行以下工作：
+- 为每个雇员建立索引文档，文档中包含单个雇员的全部信息
+- 每个文档都是employee类型（type）
+- 这个类型在megacorp索引（index）下
+- 索引存储在我们的Elasticsearch集群中
+
+实践中，这个过程非常简单（虽然看上去像是很多步）。我们只需要执行一条命令完成上述步骤：
+```
+    PUT /megacorp/employee/1
+    {
+        "first_name":"John",
+        "last_name":"Smith",
+        "age":25,
+        "about":"I love to go rock climbing",
+        "interests":["sports","music"]
+    }
+```
+注意路径中的/megacorp/employee/1包含了三部分信息：
+**megacorp**是索引(index)名
+**employee**是类型(type)名
+**1**是这个雇员的ID
